@@ -3,137 +3,120 @@ namespace System1Group.Lib.Result
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.InteropServices.ComTypes;
     using CoreUtils;
 
     public sealed class ResultGuard<TSuccess, TFailure, TOut> : IGuardEntryPoint<TSuccess, TFailure, TOut>,
-                                                         IGuardAllClosing<TOut>,
-                                                         IGuardSuccess<TSuccess, TFailure, TOut>,
-                                                         IGuardSuccessOpen<TSuccess, TFailure, TOut>,
-                                                         IGuardSuccessClosing<TSuccess, TFailure, TOut>,
-                                                         IGuardFailure<TSuccess, TFailure, TOut>,
-                                                         IGuardFailureOpen<TSuccess, TFailure, TOut>,
-                                                         IGuardFailureClosing<TSuccess, TFailure, TOut>
+                                                                IGuardSuccessClosing<TFailure, TOut>,
+                                                                IGuardFailureClosing<TOut>
     {
         private readonly Result<TSuccess, TFailure> innerResult;
 
-        private readonly List<CheckAndCall<TSuccess>> successCalls = new List<CheckAndCall<TSuccess>>();
+        private readonly List<(Func<TSuccess, bool> predicate, Func<TSuccess, TOut> calculator)> successCalls =
+            new List<(Func<TSuccess, bool>, Func<TSuccess, TOut>)>();
 
-        private readonly List<CheckAndCall<TFailure>> failureCalls = new List<CheckAndCall<TFailure>>();
+        private readonly List<(Func<TFailure, bool> predicate, Func<TFailure, TOut> calculator)> failureCalls =
+            new List<(Func<TFailure, bool>, Func<TFailure, TOut>)>();
 
-        private Func<TSuccess, TOut> defaultSuccessCall;
-
-        private Func<TFailure, TOut> defaultFailureCall;
+        private Func<TOut> defaultCall;
 
         public ResultGuard(Result<TSuccess, TFailure> innerResult)
         {
-            this.innerResult = ReturnParameter.OrThrowIfNull(innerResult, nameof(innerResult));
+            Throw.IfNull(innerResult, nameof(innerResult));
+            this.innerResult = innerResult;
         }
 
-        IGuardSuccessClosing<TSuccess, TFailure, TOut> IGuardSuccessOpen<TSuccess, TFailure, TOut>.Default(Func<TSuccess, TOut> call)
+        public IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>> configurator)
         {
-            Throw.IfNull(call, nameof(call));
-            this.defaultSuccessCall = call;
+            Throw.IfNull(configurator, nameof(configurator));
+
+            configurator(predicate => new GuardResultCalculator<TSuccess, TOut>(calculate => { this.successCalls.Add((predicate, calculate)); }));
+
             return this;
         }
 
-        public IGuardAllClosing<TOut> Default(Func<TSuccess, TOut> call)
+        public IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>, Action<TOut>> configurator)
         {
-            Throw.IfNull(call, nameof(call));
-            this.defaultSuccessCall = call;
+            configurator(
+                predicate => new GuardResultCalculator<TSuccess, TOut>(calculate => { this.successCalls.Add((predicate, calculate)); }),
+                @default => { this.successCalls.Add((_ => true, _ => @default)); });
+
             return this;
         }
 
-        IGuardFailureClosing<TSuccess, TFailure, TOut> IGuardFailureOpen<TSuccess, TFailure, TOut>.Default(Func<TFailure, TOut> call)
+        public IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>, Action<Func<TSuccess, TOut>>> configurator)
         {
-            Throw.IfNull(call, nameof(call));
-            this.defaultFailureCall = call;
+            configurator(
+                predicate => new GuardResultCalculator<TSuccess, TOut>(calculate => { this.successCalls.Add((predicate, calculate)); }),
+                @default => { this.successCalls.Add((_ => true, @default)); });
+
             return this;
         }
 
-        public IGuardAllClosing<TOut> Default(Func<TFailure, TOut> call)
-        {
-            Throw.IfNull(call, nameof(call));
-            this.defaultFailureCall = call;
-            return this;
-        }
-
-        public IGuardSuccess<TSuccess, TFailure, TOut> Where(Func<TSuccess, bool> check, Func<TSuccess, TOut> call)
-        {
-            Throw.IfNull(check, nameof(check));
-            Throw.IfNull(call, nameof(call));
-            this.successCalls.Add(new CheckAndCall<TSuccess>(check, call));
-            return this;
-        }
-
-        IGuardSuccessOpen<TSuccess, TFailure, TOut> IGuardSuccessOpen<TSuccess, TFailure, TOut>.Where(Func<TSuccess, bool> check, Func<TSuccess, TOut> call)
-        {
-            Throw.IfNull(check, nameof(check));
-            Throw.IfNull(call, nameof(call));
-            this.successCalls.Add(new CheckAndCall<TSuccess>(check, call));
-            return this;
-        }
-
-        IGuardFailure<TSuccess, TFailure, TOut> IGuardFailure<TSuccess, TFailure, TOut>.Where(Func<TFailure, bool> check, Func<TFailure, TOut> call)
-        {
-            Throw.IfNull(check, nameof(check));
-            Throw.IfNull(call, nameof(call));
-            this.failureCalls.Add(new CheckAndCall<TFailure>(check, call));
-            return this;
-        }
-
-        public IGuardFailureOpen<TSuccess, TFailure, TOut> Where(Func<TFailure, bool> check, Func<TFailure, TOut> call)
-        {
-            Throw.IfNull(check, nameof(check));
-            Throw.IfNull(call, nameof(call));
-            this.failureCalls.Add(new CheckAndCall<TFailure>(check, call));
-            return this;
-        }
-
-        IGuardFailure<TSuccess, TFailure, TOut> IGuardSuccessClosing<TSuccess, TFailure, TOut>.Failure()
+        public IGuardSuccessClosing<TFailure, TOut> DoNotHandleSuccess()
         {
             return this;
         }
 
-        IGuardSuccess<TSuccess, TFailure, TOut> IGuardFailureClosing<TSuccess, TFailure, TOut>.Success()
+        public IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>> configurator)
+        {
+            Throw.IfNull(configurator, nameof(configurator));
+
+            configurator(predicate => new GuardResultCalculator<TFailure, TOut>(calculate => { this.failureCalls.Add((predicate, calculate)); }));
+
+            return this;
+        }
+
+        public IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>, Action<TOut>> configurator)
+        {
+            Throw.IfNull(configurator, nameof(configurator));
+
+            configurator(
+                predicate => new GuardResultCalculator<TFailure, TOut>(calculate => { this.failureCalls.Add((predicate, calculate)); }),
+                @default => { this.failureCalls.Add((_ => true, _ => @default)); });
+
+            return this;
+        }
+
+        public IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>, Action<Func<TFailure, TOut>>> configurator)
+        {
+            Throw.IfNull(configurator, nameof(configurator));
+
+            configurator(
+                predicate => new GuardResultCalculator<TFailure, TOut>(calculate => { this.failureCalls.Add((predicate, calculate)); }),
+                @default => { this.failureCalls.Add((_ => true, @default)); });
+
+            return this;
+        }
+
+        public IGuardFailureClosing<TOut> DoNotHandleFailure()
         {
             return this;
         }
 
-        IGuardSuccessOpen<TSuccess, TFailure, TOut> IGuardEntryPoint<TSuccess, TFailure, TOut>.Success()
+        public TOut Default(TOut outValue)
         {
-            return this;
+            this.defaultCall = () => outValue;
+            return this.Do();
         }
 
-        IGuardFailureOpen<TSuccess, TFailure, TOut> IGuardEntryPoint<TSuccess, TFailure, TOut>.Failure()
+        public TOut Default(Func<TOut> outFunc)
         {
-            return this;
+            this.defaultCall = outFunc;
+            return this.Do();
         }
 
-        public TOut Do()
+        private static TOut CallFunctionOrDefault<T>(T obj, IEnumerable<(Func<T, bool> predicate, Func<T, TOut> calculator)> calls, Func<TOut> @default)
+        {
+            var matchingFunc = calls.FirstOrDefault(c => c.predicate(obj));
+            return matchingFunc.calculator != null ? matchingFunc.calculator(obj) : @default();
+        }
+
+        private TOut Do()
         {
             return this.innerResult.Do(
-                success => CallFunctionOrDefault(success, this.successCalls, this.defaultSuccessCall),
-                failure => CallFunctionOrDefault(failure, this.failureCalls, this.defaultFailureCall));
-        }
-
-        private static TOut CallFunctionOrDefault<T>(T obj, IEnumerable<CheckAndCall<T>> calls, Func<T, TOut> @default)
-        {
-            var matchingFunc = calls.FirstOrDefault(c => c.Check(obj));
-            return matchingFunc.Call != null ? matchingFunc.Call(obj) : @default(obj);
-        }
-
-        private struct CheckAndCall<TIn>
-        {
-            public CheckAndCall(Func<TIn, bool> check, Func<TIn, TOut> call)
-                : this()
-            {
-                this.Check = check;
-                this.Call = call;
-            }
-
-            public Func<TIn, bool> Check { get; private set; }
-
-            public Func<TIn, TOut> Call { get; private set; }
+                success => CallFunctionOrDefault(success, this.successCalls, this.defaultCall),
+                failure => CallFunctionOrDefault(failure, this.failureCalls, this.defaultCall));
         }
     }
 }

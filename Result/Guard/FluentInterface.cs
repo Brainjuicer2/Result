@@ -6,51 +6,30 @@
     public interface IGuardEntryPoint<TSuccess, TFailure, TOut>
 #pragma warning restore SA1649 // File name must match first type name
     {
-        IGuardSuccessOpen<TSuccess, TFailure, TOut> Success();
+        IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>> configurator);
 
-        IGuardFailureOpen<TSuccess, TFailure, TOut> Failure();
+        IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>, Action<TOut>> configurator);
+
+        IGuardSuccessClosing<TFailure, TOut> Success(Action<Func<Func<TSuccess, bool>, GuardResultCalculator<TSuccess, TOut>>, Action<Func<TSuccess, TOut>>> configurator);
+
+        IGuardSuccessClosing<TFailure, TOut> DoNotHandleSuccess();
     }
 
-    public interface IGuardAllClosing<TOut>
+    public interface IGuardSuccessClosing<TFailure, TOut>
     {
-        TOut Do();
+        IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>> configurator);
+
+        IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>, Action<TOut>> configurator);
+
+        IGuardFailureClosing<TOut> Failure(Action<Func<Func<TFailure, bool>, GuardResultCalculator<TFailure, TOut>>, Action<Func<TFailure, TOut>>> configurator);
+
+        IGuardFailureClosing<TOut> DoNotHandleFailure();
     }
 
-    public interface IGuardSuccess<TSuccess, TFailure, TOut>
+    public interface IGuardFailureClosing<TOut>
     {
-        IGuardSuccess<TSuccess, TFailure, TOut> Where(Func<TSuccess, bool> checker, Func<TSuccess, TOut> result);
+        TOut Default(TOut outValue);
 
-        IGuardAllClosing<TOut> Default(Func<TSuccess, TOut> result);
-    }
-
-    public interface IGuardSuccessOpen<TSuccess, TFailure, TOut>
-    {
-        IGuardSuccessOpen<TSuccess, TFailure, TOut> Where(Func<TSuccess, bool> checker, Func<TSuccess, TOut> result);
-
-        IGuardSuccessClosing<TSuccess, TFailure, TOut> Default(Func<TSuccess, TOut> result);
-    }
-
-    public interface IGuardSuccessClosing<TSuccess, TFailure, TOut>
-    {
-        IGuardFailure<TSuccess, TFailure, TOut> Failure();
-    }
-
-    public interface IGuardFailure<TSuccess, TFailure, TOut>
-    {
-        IGuardFailure<TSuccess, TFailure, TOut> Where(Func<TFailure, bool> checker, Func<TFailure, TOut> result);
-
-        IGuardAllClosing<TOut> Default(Func<TFailure, TOut> result);
-    }
-
-    public interface IGuardFailureOpen<TSuccess, TFailure, TOut>
-    {
-        IGuardFailureOpen<TSuccess, TFailure, TOut> Where(Func<TFailure, bool> checker, Func<TFailure, TOut> result);
-
-        IGuardFailureClosing<TSuccess, TFailure, TOut> Default(Func<TFailure, TOut> result);
-    }
-
-    public interface IGuardFailureClosing<TSuccess, TFailure, TOut>
-    {
-        IGuardSuccess<TSuccess, TFailure, TOut> Success();
+        TOut Default(Func<TOut> outFunc);
     }
 }
