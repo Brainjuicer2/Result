@@ -202,5 +202,25 @@
             Throw.IfNull(result, nameof(result));
             result.Do(_ => { }, action);
         }
+
+        public static Result<TReturn, TFailure> Combine<TSuccess, TFailure, TReturn, TCombine>(
+            this Result<TSuccess, TFailure> result,
+            Result<TCombine, TFailure> combineWith,
+            Func<TSuccess, TCombine, TReturn> combineUsing)
+        {
+            Throw.IfNull(combineWith, nameof(combineWith));
+            Throw.IfNull(combineUsing, nameof(combineUsing));
+            return result.BindToResult(t => combineWith.Bind(c => combineUsing(t, c)));
+        }
+
+        public static Result<TReturn, TFailure> CombineToResult<TSuccess, TFailure, TReturn, TCombine>(
+            this Result<TSuccess, TFailure> result,
+            Result<TCombine, TFailure> combineWith,
+            Func<TSuccess, TCombine, Result<TReturn, TFailure>> combineUsing)
+        {
+            Throw.IfNull(combineWith, nameof(combineWith));
+            Throw.IfNull(combineUsing, nameof(combineUsing));
+            return result.BindToResult(t => combineWith.BindToResult(c => combineUsing(t, c)));
+        }
     }
 }

@@ -43,19 +43,5 @@
             Throw.IfNull(bindingAction, nameof(bindingAction));
             return LazyResult.Create(() => base.BindToResult(bindingAction));
         }
-
-        public override Result<TReturn, TFailure> Combine<TReturn, TCombine>([IsPOCO] Result<TCombine, TFailure> combineWith, Func<TSuccess, TCombine, TReturn> combineUsing)
-        {
-            Throw.IfNull(combineWith, nameof(combineWith));
-            Throw.IfNull(combineUsing, nameof(combineUsing));
-            return LazyResult.Create(() => base.Combine(combineWith, combineUsing));
-        }
-
-        public override Result<TReturn, TFailure> CombineToResult<TReturn, TCombine>([IsPOCO] Result<TCombine, TFailure> combineWith, Func<TSuccess, TCombine, Result<TReturn, TFailure>> combineUsing)
-        {
-            Throw.IfNull(combineWith, nameof(combineWith));
-            Throw.IfNull(combineUsing, nameof(combineUsing));
-            return LazyResult.Create(() => base.CombineToResult(combineWith, combineUsing));
-        }
     }
 }
