@@ -68,8 +68,8 @@
             Assert.That(
                 results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6]).Unwrap(),
                 Is.EqualTo(
-                    (results[0].Unwrap(), results[1].Unwrap(), results[2].Unwrap(), results[3].Unwrap(), results[4].Unwrap(), results[5].Unwrap(), results[6]
-                        .Unwrap())));
+                    (results[0].Unwrap(), results[1].Unwrap(), results[2].Unwrap(), results[3].Unwrap(), results[4].Unwrap(), results[5].Unwrap(),
+                        results[6].Unwrap())));
         }
 
         [Test]
@@ -81,7 +81,7 @@
                 results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], results[7]).Unwrap(),
                 Is.EqualTo(
                     (results[0].Unwrap(), results[1].Unwrap(), results[2].Unwrap(), results[3].Unwrap(), results[4].Unwrap(), results[5].Unwrap(),
-                    results[6].Unwrap(), results[7].Unwrap())));
+                        results[6].Unwrap(), results[7].Unwrap())));
         }
 
         [Test]
@@ -93,7 +93,7 @@
                 results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8]).Unwrap(),
                 Is.EqualTo(
                     (results[0].Unwrap(), results[1].Unwrap(), results[2].Unwrap(), results[3].Unwrap(), results[4].Unwrap(), results[5].Unwrap(),
-                    results[6].Unwrap(), results[7].Unwrap(), results[8].Unwrap())));
+                        results[6].Unwrap(), results[7].Unwrap(), results[8].Unwrap())));
         }
 
         [Test]
@@ -105,7 +105,7 @@
                 results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8], results[9]).Unwrap(),
                 Is.EqualTo(
                     (results[0].Unwrap(), results[1].Unwrap(), results[2].Unwrap(), results[3].Unwrap(), results[4].Unwrap(), results[5].Unwrap(),
-                    results[6].Unwrap(), results[7].Unwrap(), results[8].Unwrap(), results[9].Unwrap())));
+                        results[6].Unwrap(), results[7].Unwrap(), results[8].Unwrap(), results[9].Unwrap())));
         }
 
         [Test]
@@ -115,6 +115,84 @@
             var failure = Result.Failure<int, FailureType>(FailureType.Failed);
 
             Assert.That(results[0].Pack(failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok3_Failure()
+        {
+            var results = this.GetResults().Take(2).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(results[0].Pack(results[1], failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok4_Failure()
+        {
+            var results = this.GetResults().Take(3).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(results[0].Pack(results[1], results[2], failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok5_Failure()
+        {
+            var results = this.GetResults().Take(4).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(results[0].Pack(results[1], results[2], results[3], failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok6_Failure()
+        {
+            var results = this.GetResults().Take(5).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(results[0].Pack(results[1], results[2], results[3], results[4], failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok7_Failure()
+        {
+            var results = this.GetResults().Take(6).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(results[0].Pack(results[1], results[2], results[3], results[4], results[5], failure).UnwrapError(), Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok8_Failure()
+        {
+            var results = this.GetResults().Take(7).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(
+                results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], failure).UnwrapError(),
+                Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok9_Failure()
+        {
+            var results = this.GetResults().Take(8).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(
+                results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], results[7], failure).UnwrapError(),
+                Is.EqualTo(FailureType.Failed));
+        }
+
+        [Test]
+        public void Ok10_Failure()
+        {
+            var results = this.GetResults().Take(9).ToList();
+            var failure = Result.Failure<int, FailureType>(FailureType.Failed);
+
+            Assert.That(
+                results[0].Pack(results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8], failure).UnwrapError(),
+                Is.EqualTo(FailureType.Failed));
         }
 
         private IEnumerable<Result<int, FailureType>> GetResults()
