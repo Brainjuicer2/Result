@@ -23,7 +23,7 @@
                     {
                         when(i => i.Length > 100).Then("Error message is too long!");
                         when(i => i.StartsWith("Fatal error")).Then(i => "A fatal error occurred! " + i);
-                        @default("An error occured!");
+                        @default(i => "Error: " + i);
                     })
                 .Default("Who knows what happened???");
 
