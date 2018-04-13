@@ -188,5 +188,19 @@
             Throw.IfNull(result, nameof(result));
             return result.BindToResult(s => predicate(s) ? Result.Success<TSuccess, TFailure>(s) : replaceWith);
         }
+
+        [ExcludeFromAutoParameterTests("Can't initialise concrete class")]
+        public static void OnSuccess<TSuccess, TFailure>(this Result<TSuccess, TFailure> result, Action<TSuccess> action)
+        {
+            Throw.IfNull(result, nameof(result));
+            result.Do(action, _ => { });
+        }
+
+        [ExcludeFromAutoParameterTests("Can't initialise concrete class")]
+        public static void OnFailure<TSuccess, TFailure>(this Result<TSuccess, TFailure> result, Action<TFailure> action)
+        {
+            Throw.IfNull(result, nameof(result));
+            result.Do(_ => { }, action);
+        }
     }
 }
